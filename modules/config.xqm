@@ -11,10 +11,10 @@ declare namespace templates="http://exist-db.org/xquery/templates";
 declare namespace repo="http://exist-db.org/xquery/repo";
 declare namespace expath="http://expath.org/ns/pkg";
 
-(: 
+(:
     Determine the application root collection from the current module load path.
 :)
-declare variable $config:app-root := 
+declare variable $config:app-root :=
     let $rawPath := system:get-module-load-path()
     let $modulePath :=
         (: strip the xmldb: part :)
@@ -34,6 +34,10 @@ declare variable $config:data-root := $config:app-root || "/data";
 declare variable $config:repo-descriptor := doc(concat($config:app-root, "/repo.xml"))/repo:meta;
 
 declare variable $config:expath-descriptor := doc(concat($config:app-root, "/expath-pkg.xml"))/expath:package;
+
+declare variable $config:sade := "/db/sade-projects/textgrid/data/xml/";
+declare variable $config:sade-data := $config:sade || "data/";
+declare variable $config:sade-meta := $config:sade || "meta/";
 
 (:~
  : Resolve the given path using the current application context.
