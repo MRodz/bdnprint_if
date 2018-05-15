@@ -136,7 +136,7 @@ declare function pre:default-element
  : @author Uwe Sikora
  :)
 declare function pre:preprocessing
-    ($nodes as node()*) as item()* {
+    ($nodes as node()*, $replace-whitespace as xs:boolean) as item()* {
 
     for $node in $nodes
     return
@@ -144,7 +144,12 @@ declare function pre:preprocessing
             case processing-instruction() return ()
 
             case text() return (
+              if($replace-whitespace) then (
                 whitespace:text($node, "&#160;")
+              )
+              else (
+                $node
+              )
             )
 
             case comment() return ()
@@ -152,11 +157,11 @@ declare function pre:preprocessing
             case element(TEI) return (
                 element{$node/name()}{
                     $node/@*,
-                    pre:preprocessing($node/node()),
+                    pre:preprocessing($node/node(), $replace-whitespace),
                     element{"editorialNotes"}{
                         for $editorial-note in $node//note[@type eq "editorial-commentary"]
                         return
-                            pre:default-element( $editorial-note, pre:preprocessing($editorial-note/node()) )
+                            pre:default-element( $editorial-note, pre:preprocessing($editorial-note/node(), $replace-whitespace) )
                     }
                 }
             )
@@ -165,10 +170,10 @@ declare function pre:preprocessing
 
             case element(div) return (
                 if ($node[@type = 'section-group']) then (
-                    pre:preprocessing($node/node())
+                    pre:preprocessing($node/node(), $replace-whitespace)
                 )
                 else (
-                    pre:default-element( $node, pre:preprocessing($node/node()) )
+                    pre:default-element( $node, pre:preprocessing($node/node(), $replace-whitespace) )
                 )
 
             )
@@ -177,7 +182,7 @@ declare function pre:preprocessing
                 element{$node/name()}{
                     $node/@*,
                     attribute {"id"}{ generate-id($node)},
-                    pre:preprocessing($node/node())
+                    pre:preprocessing($node/node(), $replace-whitespace)
                 }
             )
 
@@ -185,13 +190,13 @@ declare function pre:preprocessing
                 element{$node/name()}{
                     $node/@*,
                     attribute {"id"}{ generate-id($node)},
-                    pre:preprocessing($node/node())
+                    pre:preprocessing($node/node(), $replace-whitespace)
                 }
             )
 
             case element(note) return (
                 if ( $node[@type != "editorial-commentary"] or $node[ not(@type) ] ) then (
-                    pre:default-element( $node, pre:preprocessing($node/node()) )
+                    pre:default-element( $node, pre:preprocessing($node/node(), $replace-whitespace) )
                 ) else ( )
             )
 
@@ -233,11 +238,11 @@ declare function pre:preprocessing
             if($node[@rend = 'right-aligned' or @rend = 'center-aligned']) then(
                     element {'aligned'} {
                         $node/@*,
-                        pre:preprocessing($node/node())
+                        pre:preprocessing($node/node(), $replace-whitespace)
                     }
                 )
                 else (
-                    pre:default-element( $node, pre:preprocessing($node/node()) )
+                    pre:default-element( $node, pre:preprocessing($node/node(), $replace-whitespace) )
                 )
             )
 
@@ -245,27 +250,27 @@ declare function pre:preprocessing
                 if($node[@type = 'item']) then(
                     element {'item'} {
                         $node/@*[name() != 'type'],
-                        pre:preprocessing($node/node())
+                        pre:preprocessing($node/node(), $replace-whitespace)
                     }
                 )
                 else if($node[@type = 'head']) then(
                     element {'head'} {
                         $node/@*[name() != 'type'],
-                        pre:preprocessing($node/node())
+                        pre:preprocessing($node/node(), $replace-whitespace)
                     }
                 )
                 else if($node[@type = 'row']) then(
                     element {'row'} {
                         $node/@*[name() != 'type'],
-                        pre:preprocessing($node/node())
+                        pre:preprocessing($node/node(), $replace-whitespace)
                     }
                 )
                 else (
-                    pre:default-element( $node, pre:preprocessing($node/node()) )
+                    pre:default-element( $node, pre:preprocessing($node/node(), $replace-whitespace) )
                 )
             )
 
             default return (
-                pre:default-element( $node, pre:preprocessing($node/node()) )
+                pre:default-element( $node, pre:preprocessing($node/node(), $replace-whitespace) )
             )
 };

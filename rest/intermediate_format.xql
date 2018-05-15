@@ -13,9 +13,10 @@ declare option exist:serialize "method=xml media-type=text/xml omit-xml-declarat
 declare variable $resource-uri := request:get-parameter("resource", ("/db/apps/interformat/data/samples/samples.xml"));
 declare variable $uri := request:get-parameter("uri", ());
 declare variable $mode := request:get-parameter("mode", ());
+declare variable $replace-whitespace := true();
 
 let $doc := ifutils:get-resource($resource-uri)
-let $preprocessed-data := pre:preprocessing($doc/tei:TEI)
+let $preprocessed-data := pre:preprocessing($doc/tei:TEI, $replace-whitespace)
 let $intermediate-format := ident:walk($preprocessed-data, ())
 let $store := if ($mode = "store") then (
         let $filename := concat(replace($resource-uri, '.+/(.+)$', '$1'), ".out")
