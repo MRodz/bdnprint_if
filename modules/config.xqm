@@ -35,7 +35,7 @@ declare variable $config:repo-descriptor := doc(concat($config:app-root, "/repo.
 
 declare variable $config:expath-descriptor := doc(concat($config:app-root, "/expath-pkg.xml"))/expath:package;
 
-declare variable $config:sade := "/db/sade-projects/textgrid/data/xml/";
+declare variable $config:sade := "/db/apps/sade/textgrid/";
 declare variable $config:sade-data := $config:sade || "data/";
 declare variable $config:sade-meta := $config:sade || "meta/";
 
