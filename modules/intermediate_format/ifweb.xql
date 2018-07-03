@@ -22,7 +22,7 @@ declare function ifweb:main($resource as xs:string) as xs:string? {
     let $doc := doc($config:sade-data || $resource)
     let $filename := substring-before($resource, '.xml') || "-if.xml"
     
-    let $replace-whitespace := false()
+    let $replace-whitespace := true()
     let $preprocessed-data := pre:preprocessing($doc/tei:TEI, $replace-whitespace)
     let $intermediate-format := ident:walk($preprocessed-data, ())
     
