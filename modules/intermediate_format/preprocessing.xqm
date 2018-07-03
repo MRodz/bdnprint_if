@@ -187,11 +187,47 @@ declare function pre:preprocessing
             )
 
             case element(rdg) return (
-                element{$node/name()}{
-                    $node/@*,
-                    attribute {"id"}{ generate-id($node)},
-                    pre:preprocessing($node/node(), $replace-whitespace)
-                }
+                (: on the website we need a counter for every tei:rdg that goes
+                into the critical apparatus. to save time in the internal area
+                of the page we decided to put all counting here and saving it in
+                @app-id instead of doing it on the fly. :)
+                if ($node[@type = ("v", "pp", "pt")]) then ( 
+                    let $current-div-no := 
+                        count($node/ancestor::div[1]/preceding::div[@type = "section"])
+                        + 1
+                    let $app-count :=
+                        count($node/ancestor::app[ancestor::div[1] = $node/ancestor::div[1] 
+                            and not(rdg[@type = "ptl" or @type = "ppl"]) 
+                            and rdg[@type = "v" or @type = "pt" or @type = "pp"]]) 
+                        + count($node/preceding::app[ancestor::div[1] = $node/ancestor::div[1]
+                            and not(count(rdg) = 1 
+                            and rdg[@type = "ptl" or @type = "ppl"]) 
+                            and rdg[@type = "v" or @type = "pt" or @type = "pp"]]) 
+                        + 1
+                    let $app-id := 
+                        if($node/@xml:id) then
+                            $node/@xml:id
+                        else
+                            "app-" || $current-div-no || "-" || $app-count
+                    return
+                        element {$node/name()} {
+                            $node/@*,
+                            attribute {"app-id"}{$app-id},
+                            attribute {"id"}{ generate-id($node)},
+                            pre:preprocessing($node/node(), $replace-whitespace)
+                        }
+                )
+                else
+                    element{$node/name()}{
+                        $node/@*,
+                        attribute {"id"}{ generate-id($node)},
+                        pre:preprocessing($node/node(), $replace-whitespace)
+                    }
+(:                element{$node/name()}{:)
+(:                    $node/@*,:)
+(:                    attribute {"id"}{ generate-id($node)},:)
+(:                    pre:preprocessing($node/node(), $replace-whitespace):)
+(:                }:)
             )
 
             case element(note) return (
