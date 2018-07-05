@@ -302,6 +302,12 @@ declare function pre:preprocessing
                         pre:preprocessing($node/node(), $replace-whitespace)
                     }
                 )
+                else if($node[@type = 'cell']) then(
+                    element {'row'} {
+                        $node/@*[name() != 'type'],
+                        pre:preprocessing($node/node(), $replace-whitespace)
+                    }
+                )
                 else (
                     pre:default-element( $node, pre:preprocessing($node/node(), $replace-whitespace) )
                 )
