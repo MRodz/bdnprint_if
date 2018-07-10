@@ -31,9 +31,9 @@ declare function whitespace:text
     ( $text as text()*, $escape-char as xs:string? ) as text()* {
 
     let $whitespace-node := $text[matches(., "[\s\n\r\t]") and normalize-space(.) = ""]
-    let $single-whitespace-between-nodes := $text = ' '
+    let $single-whitespace-between-nodes := $text = " "
     return
-        if ( not($whitespace-node) or $single-whitespace-between-nodes) then (
+        if (not($whitespace-node)) then (
 
             if ($escape-char) then (
                 whitespace:escape-text($text, "@")
@@ -62,4 +62,17 @@ declare function whitespace:escape-text
     ($text as text()*, $escape as xs:string) as text()* {
 
     text {replace($text, '[\s]+', $escape)}
+};
+
+declare function whitespace:remove($nodes as node()*) as node()* {
+    for $node in $nodes
+    return
+        typeswitch ($node)
+        case text() return
+            if([matches($node, "[\s\n\r\t]") and normalize-space(.) = ""]) then 
+                ()
+            else
+                $node
+        default return
+            $node
 };
