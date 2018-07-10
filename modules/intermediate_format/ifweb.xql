@@ -18,13 +18,33 @@ import module namespace config = "http://bdn-edition.de/intermediate_format/conf
 
 declare option exist:serialize "method=xml media-type=text/xml omit-xml-declaration=no indent=no";
 
+
 declare function ifweb:main($resource as xs:string) as xs:string? {
     let $doc := doc($config:sade-data || $resource)
     let $filename := substring-before($resource, '.xml') || "-if.xml"
     
+    return ifweb:transform($doc, $filename)
+};
+
+
+declare function ifweb:transform($doc as node()*, $filename as xs:string) 
+as node()* {
     let $replace-whitespace := true()
     let $preprocessed-data := pre:preprocessing($doc/tei:TEI, $replace-whitespace)
     let $intermediate-format := ident:walk($preprocessed-data, ())
+    let $store := xmldb:store($config:sade-data, $filename, $intermediate-format)
     
-    return xmldb:store($config:sade-data, $filename, $intermediate-format)
+    return $intermediate-format
+};
+
+declare function ifweb:complete-xml($author as xs:string, $xml as node()*) 
+as node()* {
+    let $filename := $author || "-full-if.xml"
+    return ifweb:transform($xml, $filename)
+};
+
+declare function ifweb:single-xml($resource as node()*, $filename as xs:string) 
+as node()* {
+    let $filename := substring-before($filename, '.xml') || "-if.xml"
+    return ifweb:transform($resource, $filename)
 };
