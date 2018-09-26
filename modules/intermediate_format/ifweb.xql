@@ -12,6 +12,7 @@ module namespace ifweb="http://bdn-edition.de/intermediate_format/ifweb";
 
 declare namespace tei = "http://www.tei-c.org/ns/1.0";
 
+import module namespace console="http://exist-db.org/xquery/console";
 import module namespace pre="http://bdn-edition.de/intermediate_format/preprocessing" at "xmldb:exist:///db/apps/interformat/modules/intermediate_format/preprocessing.xqm";
 import module namespace ident = "http://bdn-edition.de/intermediate_format/identification" at "xmldb:exist:///db/apps/interformat/modules/intermediate_format/identification.xqm";
 import module namespace config = "http://bdn-edition.de/intermediate_format/config" at "xmldb:exist:///db/apps/interformat/modules/config.xqm";
@@ -30,7 +31,9 @@ declare function ifweb:main($resource as xs:string) as xs:string? {
 declare function ifweb:transform($doc as node()*, $filename as xs:string) 
 as node()* {
     let $replace-whitespace := true()
+    let $log := console:log("Start preprocessing.")
     let $preprocessed-data := pre:preprocessing($doc/tei:TEI, $replace-whitespace)
+    let $log := console:log("Start main processing.")
     let $intermediate-format := ident:walk($preprocessed-data, ())
     let $store := xmldb:store($config:sade-data, $filename, $intermediate-format)
     
@@ -39,6 +42,14 @@ as node()* {
 
 declare function ifweb:complete-xml($author as xs:string, $xml as node()*) 
 as node()* {
+    let $log-dir :=
+        if(xmldb:collection-available($config:app-root || "/logs")) then
+            $config:app-root || "/logs" 
+        else
+            xmldb:create-collection($config:app-root, "logs")
+    let $log-name := "log.xml"
+    let $create := xmldb:store($log-dir, $log-name, <root/>)
+            
     let $filename := $author || "-full-if.xml"
     return ifweb:transform($xml, $filename)
 };

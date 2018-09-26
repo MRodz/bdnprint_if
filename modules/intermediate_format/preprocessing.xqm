@@ -12,6 +12,7 @@ xquery version "3.0";
  :)
 module namespace pre="http://bdn-edition.de/intermediate_format/preprocessing";
 import module namespace whitespace = "http://bdn-edition.de/intermediate_format/whitespace_handling" at "whitespace-handling.xqm";
+import module namespace console="http://exist-db.org/xquery/console";
 
 declare default element namespace "http://www.tei-c.org/ns/1.0";
 
@@ -109,7 +110,7 @@ declare function pre:default-element
     let $following-node := $node/following-sibling::node()[1]
     let $following-sibling := $node/following-sibling::*[1]
     return
-        element{$node/name()}{
+        (element{$node/name()}{
             $node/@*,
             (if($following-node[matches(., "[\s\n\r\t]") and normalize-space(.) = ""]
             and $following-sibling[self::ref or self::app or self::hi or self::bibl
@@ -121,7 +122,9 @@ declare function pre:default-element
                 attribute {"break-after"}{"yes"}
             else ()),
             $recursive-function
-        }
+        },
+        update insert $node into doc("/db/apps/interformat/logs/log.xml")/*
+        )
 };
 
 
