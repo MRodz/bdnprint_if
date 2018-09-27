@@ -162,7 +162,7 @@ declare function pre:preprocessing
                 element{$node/name()}{
                     $node/@*,
                     pre:preprocessing($node/node(), $replace-whitespace),
-                    element{"editorialNotes"}{
+                    element{"editorial-notes"}{
                         for $editorial-note in $node//note[@type eq "editorial-commentary"]
                         return
                             pre:default-element( $editorial-note, pre:preprocessing($editorial-note/node(), $replace-whitespace) )
@@ -227,11 +227,6 @@ declare function pre:preprocessing
                         attribute {"id"}{ generate-id($node)},
                         pre:preprocessing($node/node(), $replace-whitespace)
                     }
-(:                element{$node/name()}{:)
-(:                    $node/@*,:)
-(:                    attribute {"id"}{ generate-id($node)},:)
-(:                    pre:preprocessing($node/node(), $replace-whitespace):)
-(:                }:)
             )
 
             case element(note) return (
