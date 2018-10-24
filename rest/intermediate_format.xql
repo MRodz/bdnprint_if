@@ -14,9 +14,10 @@ declare variable $resource-uri := request:get-parameter("resource", ("/db/apps/i
 declare variable $uri := request:get-parameter("uri", ());
 declare variable $mode := request:get-parameter("mode", ());
 declare variable $replace-whitespace := true();
+declare variable $print := true();
 
 let $doc := ifutils:get-resource($resource-uri)
-let $preprocessed-data := pre:preprocessing($doc/tei:TEI, $replace-whitespace)
+let $preprocessed-data := pre:preprocessing($doc/tei:TEI, $replace-whitespace, $print)
 let $intermediate-format := ident:walk($preprocessed-data, ())
 let $store := if ($mode = "store") then (
         let $filename := concat(replace($resource-uri, '.+/(.+)$', '$1'), ".out")

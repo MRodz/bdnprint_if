@@ -19,6 +19,8 @@ import module namespace config = "http://bdn-edition.de/intermediate_format/conf
 
 declare option exist:serialize "method=xml media-type=text/xml omit-xml-declaration=no indent=no";
 
+declare variable $ifweb:replace-whitespace := true();
+declare variable $ifweb:print := false();
 
 declare function ifweb:main($resource as xs:string) as xs:string? {
     let $doc := doc($config:sade-data || $resource)
@@ -30,10 +32,7 @@ declare function ifweb:main($resource as xs:string) as xs:string? {
 
 declare function ifweb:transform($doc as node()*, $filename as xs:string) 
 as node()* {
-    let $replace-whitespace := true()
-    let $log := console:log("Start preprocessing.")
-    let $preprocessed-data := pre:preprocessing($doc/tei:TEI, $replace-whitespace)
-    let $log := console:log("Start main processing.")
+    let $preprocessed-data := pre:preprocessing($doc/tei:TEI, $ifweb:replace-whitespace, $ifweb:print)
     let $intermediate-format := ident:walk($preprocessed-data, ())
     let $store := xmldb:store($config:sade-data, $filename, $intermediate-format)
     
@@ -58,4 +57,18 @@ declare function ifweb:single-xml($resource as node()*, $filename as xs:string)
 as node()* {
     let $filename := substring-before($filename, '.xml') || "-if.xml"
     return ifweb:transform($resource, $filename)
+};
+
+declare function ifweb:transform-split-xml($xml as node()*, $filename as xs:string, 
+$dir as xs:string) {
+    let $preprocessed-data := pre:preprocessing($xml/*, $ifweb:replace-whitespace, $ifweb:print)
+    let $intermediate-format := ident:walk($preprocessed-data, ())
+    let $content := 
+        if(count($intermediate-format) gt 1) then
+            element tei:div {$intermediate-format}
+        else
+            $intermediate-format
+    let $store := xmldb:store($dir, $filename, $content)
+    
+    return $intermediate-format
 };
