@@ -106,11 +106,11 @@ declare function pre:preprocessing-textNode
  : @author Uwe Sikora
  :)
 declare function pre:default-element
-    ( $node as node(), $recursive-function as node()* ) as item()* {
+    ( $node as node(), $recursive-function as node()* ) as element()* {
     let $following-node := $node/following-sibling::node()[1]
     let $following-sibling := $node/following-sibling::*[1]
     return
-        (element{$node/name()}{
+        element{$node/name()}{
             $node/@*,
             (if($following-node[matches(., "[\s\n\r\t]") and normalize-space(.) = ""]
             and $following-sibling[self::ref or self::app or self::hi or self::bibl
@@ -122,9 +122,7 @@ declare function pre:default-element
                 attribute {"break-after"}{"yes"}
             else ()),
             $recursive-function
-        },
-        update insert $node into doc("/db/apps/interformat/logs/log.xml")/*
-        )
+        }
 };
 
 
@@ -140,7 +138,7 @@ declare function pre:default-element
  : @author Uwe Sikora
  :)
 declare function pre:preprocessing
-    ($nodes as node()*, $replace-whitespace as xs:boolean, $print as xs:boolean) 
+    ($nodes as node()*, $replace-whitespace as xs:boolean) 
     as item()* {
 
     for $node in $nodes
@@ -162,11 +160,11 @@ declare function pre:preprocessing
             case element(TEI) return (
                 element{$node/name()}{
                     $node/@*,
-                    pre:preprocessing($node/node(), $replace-whitespace, $print),
+                    pre:preprocessing($node/node(), $replace-whitespace),
                     element{"editorial-notes"}{
                         for $editorial-note in $node//note[@type eq "editorial-commentary"]
                         return
-                            pre:default-element( $editorial-note, pre:preprocessing($editorial-note/node(), $replace-whitespace, $print) )
+                            pre:default-element( $editorial-note, pre:preprocessing($editorial-note/node(), $replace-whitespace) )
                     }
                 }
             )
@@ -174,11 +172,17 @@ declare function pre:preprocessing
             case element(teiHeader) return ( $node )
 
             case element(div) return (
-                if ($node[@type = 'section-group']) then (
-                    pre:preprocessing($node/node(), $replace-whitespace, $print)
+                if ($node[@type = "section-group"]) then (
+                    pre:preprocessing($node/node(), $replace-whitespace)
                 )
+                else if($node[@type]) then
+                    element{$node/name()}{
+                        $node/@*,
+                        attribute {"id"}{ generate-id($node)},
+                        pre:preprocessing($node/node(), $replace-whitespace)
+                    }                   
                 else (
-                    pre:default-element( $node, pre:preprocessing($node/node(), $replace-whitespace, $print) )
+                    pre:default-element( $node, pre:preprocessing($node/node(), $replace-whitespace) )
                 )
 
             )
@@ -187,52 +191,21 @@ declare function pre:preprocessing
                 element{$node/name()}{
                     $node/@*,
                     attribute {"id"}{ generate-id($node)},
-                    pre:preprocessing($node/node(), $replace-whitespace, $print)
+                    pre:preprocessing($node/node(), $replace-whitespace)
                 }
             )
 
             case element(rdg) return (
-                (: on the website we need a counter for every tei:rdg that goes
-                into the critical apparatus. to save time in the internal area
-                of the page we decided to put all counting here and saving it in
-                @app-id instead of doing it on the fly. :)
-                if ($node[@type = ("v", "pp", "pt")] and not($print)) then ( 
-                    let $current-div-no := 
-                        count($node/ancestor::div[1]/preceding::div[@type = "section"])
-                        + 1
-                    let $app-count :=
-                        count($node/ancestor::app[ancestor::div[1] = $node/ancestor::div[1] 
-                            and not(rdg[@type = "ptl" or @type = "ppl"]) 
-                            and rdg[@type = "v" or @type = "pt" or @type = "pp"]]) 
-                        + count($node/preceding::app[ancestor::div[1] = $node/ancestor::div[1]
-                            and not(count(rdg) = 1 
-                            and rdg[@type = "ptl" or @type = "ppl"]) 
-                            and rdg[@type = "v" or @type = "pt" or @type = "pp"]]) 
-                        + 1
-                    let $app-id := 
-                        if($node/@xml:id) then
-                            $node/@xml:id
-                        else
-                            "app-" || $current-div-no || "-" || $app-count
-                    return
-                        element {$node/name()} {
-                            $node/@*,
-                            attribute {"app-id"}{$app-id},
-                            attribute {"id"}{ generate-id($node)},
-                            pre:preprocessing($node/node(), $replace-whitespace, $print)
-                        }
-                )
-                else
-                    element{$node/name()}{
-                        $node/@*,
-                        attribute {"id"}{ generate-id($node)},
-                        pre:preprocessing($node/node(), $replace-whitespace, $print)
-                    }
+                element{$node/name()}{
+                    $node/@*,
+                    attribute {"id"}{ generate-id($node)},
+                    pre:preprocessing($node/node(), $replace-whitespace)
+                }
             )
 
             case element(note) return (
                 if ( $node[@type != "editorial-commentary"] or $node[ not(@type) ] ) then (
-                    pre:default-element( $node, pre:preprocessing($node/node(), $replace-whitespace, $print) )
+                    pre:default-element( $node, pre:preprocessing($node/node(), $replace-whitespace) )
                 ) else ( )
             )
 
@@ -274,11 +247,11 @@ declare function pre:preprocessing
             if($node[@rend = 'right-aligned' or @rend = 'center-aligned']) then(
                     element {'aligned'} {
                         $node/@*,
-                        pre:preprocessing($node/node(), $replace-whitespace, $print)
+                        pre:preprocessing($node/node(), $replace-whitespace)
                     }
                 )
                 else (
-                    pre:default-element( $node, pre:preprocessing($node/node(), $replace-whitespace, $print) )
+                    pre:default-element( $node, pre:preprocessing($node/node(), $replace-whitespace) )
                 )
             )
 
@@ -286,33 +259,33 @@ declare function pre:preprocessing
                 if($node[@type = 'item']) then(
                     element {'item'} {
                         $node/@*[name() != 'type'],
-                        pre:preprocessing($node/node(), $replace-whitespace, $print)
+                        pre:preprocessing($node/node(), $replace-whitespace)
                     }
                 )
                 else if($node[@type = 'head']) then(
                     element {'head'} {
                         $node/@*[name() != 'type'],
-                        pre:preprocessing($node/node(), $replace-whitespace, $print)
+                        pre:preprocessing($node/node(), $replace-whitespace)
                     }
                 )
                 else if($node[@type = 'row']) then(
                     element {'row'} {
                         $node/@*[name() != 'type'],
-                        pre:preprocessing($node/node(), $replace-whitespace, $print)
+                        pre:preprocessing($node/node(), $replace-whitespace)
                     }
                 )
                 else if($node[@type = 'cell']) then(
                     element {'row'} {
                         $node/@*[name() != 'type'],
-                        pre:preprocessing($node/node(), $replace-whitespace, $print)
+                        pre:preprocessing($node/node(), $replace-whitespace)
                     }
                 )
                 else (
-                    pre:default-element( $node, pre:preprocessing($node/node(), $replace-whitespace, $print) )
+                    pre:default-element( $node, pre:preprocessing($node/node(), $replace-whitespace) )
                 )
             )
 
             default return (
-                pre:default-element( $node, pre:preprocessing($node/node(), $replace-whitespace, $print) )
+                pre:default-element( $node, pre:preprocessing($node/node(), $replace-whitespace) )
             )
 };
